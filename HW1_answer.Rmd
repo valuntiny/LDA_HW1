@@ -132,8 +132,42 @@ TLC %>% gather(week0:week6, key = "weeks", value = "level") %>%
   geom_boxplot() +
   facet_grid(. ~ assignment) +
   theme(legend.position = "none")
+
 ```
 
+\textbf{Figure3. spaghetti plot for standardized TLC data}
+
+```{r, dpi = 300, fig.height = 3}
+# standardized time plot
+TLC2 <- sweep(TLC[,c(3:6)], 2, apply(TLC[,c(3:6)], 2, mean))
+sd1 <- apply(TLC[,c(3:6)], 2, sd)
+TLC2 <- sweep(TLC2, 2, sd1, FUN = "/")
+TLC2 <- cbind(TLC[,c(1:2)], TLC2)
+TLC2 %>% gather(week0:week6, key = "weeks", value = "level") %>% 
+  ggplot(aes(x = weeks, y = level, group = id, color = id)) +
+  geom_line() +
+  facet_grid(. ~ assignment) +
+  theme(legend.position = "none")
+
+```
+
+From Fig.1 to Fig.3, we can hardly tell if the blood lead level is decreasing through time in treatment group. But there exists difference between treatment and control group.
+
+\textbf{Figure4. median polish for TLC data}
+
+```{r, dpi = 300, fig.height = 6}
+# median polish
+junk1 <- medpolish(TLC[,c(3:6)])
+res <- junk1$res
+cols <- rep(1:100, rep(4, 100))
+par(mfcol = c(2, 2))
+plot(as.vector(t(res)), col = cols, pch = 19, cex = 0.8, 
+     xlab = "Children", ylab = "Residuals", main = "(A) Residuals Using Median Polish")
+plot(junk1$col ,xlab = "Weeks", ylab = "Week Effect", main = "(B) Week Effect from Median Polish")
+plot(junk1$row, xlab = "Children", ylab = "Children Effect", main = "(C) Children Effect from Median Polish")
+acf(as.vector(t(res)), xlab = "Lag", main = "(D) Correlation in TLC Data")
+
+```
 
 
 
