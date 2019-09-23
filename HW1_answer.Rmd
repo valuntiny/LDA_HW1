@@ -2,35 +2,141 @@
 title: "HW1_answer"
 author: "Guojing Wu | UNI: gw2383"
 date: "9/23/2019"
-output: pdf_document
+output:
+    pdf_document:
+    highlight: default
+    number_sections: true
+    citation_package:
+    keep_tex: false
+    fig_caption: true
+    latex_engine: pdflatex
+fontsize: 10pt
+geometry: margin=1in
+bibliography:
+biblio-style:
+header-includes:
+- \usepackage{indentfirst}
+- \usepackage{graphicx}
+- \usepackage{geometry}
+- \usepackage{subfigure}
+- \usepackage{amsmath}
+- \usepackage{listings}
+- \usepackage{tikz}
+- \usetikzlibrary{matrix}
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, 
-                      message = F, 
-                      warning = F)
-library(MASS) # for ordinal
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = "")
 library(tidyverse)
-library(nnet) # for multinomial
+options(knitr.table.format = "latex")
 theme_set(theme_bw())
 ```
 
-## R Markdown
+# Part A
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## 1. Plasma inorganic phosphate measurements obtained from 13 control and 20 obese patients 0, 0.5, 1, 1.5, 2, and 3 hours after an oral glucose challenge. The investigators intend to test the following hypotheses using Hotelling’s $T^{2}$ statistic. Set up suitable model clearly stating the assumptions. Suggest appropriate contrast matrices for the hypothesis tests proposed by the investigators.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Set up the model as: $Y = XB + E$, and we assume:
 
-```{r cars}
-summary(cars)
+* $y_{s_{i}} \sim MVN(\mu_{s_{i}}, \Sigma)$
+
+* each group has its own $\mu_{s_{i}}$
+
+* $\Sigma$ is the same across groups
+
+The null hypothesis has the general form as $ABC = D$, where
+
+$$
+B = \begin{pmatrix}
+  \mu_{11} & \mu_{12} & \mu_{13} & \mu_{14} & \mu_{15} & \mu_{16} \\
+  \mu_{21} & \mu_{22} & \mu_{23} & \mu_{24} & \mu_{25} & \mu_{26} \\
+\end{pmatrix} \\
+$$
+
+### (a) To test the null hypothesis that the group means are the same at all six measurement times.
+
+$$
+\begin{split}
+A &= I_{2} \\
+C &= \begin{pmatrix}
+  I_{5} \\
+  -1'_{5}
+\end{pmatrix} \\
+D &= \bf{0}_{2\times 5}
+\end{split}
+$$
+
+### (b) To test whether the profiles in the two groups are parallel.
+
+$$
+\begin{split}
+A &= \begin{pmatrix}
+  1 & -1 \\
+\end{pmatrix} \\
+C &= \begin{pmatrix}
+  1 & 0 & 0 & 0 & 0 \\
+  -1 & 1 & 0 & 0 & 0 \\
+  0 & -1 & 1 & 0 & 0 \\
+  0 & 0 & -1 & 1 & 0 \\
+  1 & 0 & 0 & -1 & 1 \\
+  1 & 0 & 0 & 0 & -1 \\
+\end{pmatrix} \\
+D &= \bf{0}_{1\times 5}
+\end{split}
+$$
+
+### (c) To test whether the differences in means at 2 and 3 hours after an oral glucose challenge are different between the control and obese patients.
+
+We need to test whether $\mu_{15} - \mu_{25} = \mu_{16} - \mu_{26}$
+
+$$
+\begin{split}
+A &= \begin{pmatrix}
+  1 & -1 \\
+\end{pmatrix} \\
+C &= \begin{pmatrix}
+  0 \\ 0 \\ 0 \\ 0 \\ 1 \\ -1 \\
+\end{pmatrix} \\
+D &= \begin{pmatrix} 0 \end{pmatrix}
+\end{split}
+$$
+
+# Part B
+
+## 1. Exposure to lead can produce cognitive impairment, especially among young children and infants. Interventions known as chelation treatments can help a child to excrete the lead that has been ingested. A chelating agent known as Succimer can be administered orally leading to urinary excretion of lead, unlike previous treatments which required injections and hospitalization. The Treatment of Lead- Exposed Children (TLC) trial was a placebo-controlled, randomized study of succimer (a chelating agent) in children with blood lead levels of 20-44 micrograms/dL. These data (TLC.dat) consist of subject id, assignment to chelation treatment with succimer or placebo and four repeated measurements of blood lead levels obtained at baseline (or week 0), week 1, week 4, and week 6 on 100 children who were randomly assigned to chelation treatment with succimer or placebo.
+
+\textbf{Figure1. spaghetti plot for TLC data}
+
+```{r, dpi = 300, fig.height = 3}
+# EDA for TLC data
+TLC = read.table("TLC.dat", header = F) %>% 
+  rename(id = V1, assignment = V2, week0 = V3, week1 = V4, week4 = V5, week6 = V6) %>% 
+  mutate(id = as.factor(id)) %>% 
+  as.tibble()
+
+# scatterplot
+TLC %>% gather(week0:week6, key = "weeks", value = "level") %>% 
+  ggplot(aes(x = weeks, y = level, group = id, color = id)) +
+  geom_line() +
+  facet_grid(. ~ assignment) +
+  theme(legend.position = "none")
+
 ```
 
-## Including Plots
+\textbf{Figure2. boxplot for TLC data mean and s.d.}
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r, dpi = 300, fig.height = 4}
+# boxplot about mean and sd
+TLC %>% gather(week0:week6, key = "weeks", value = "level") %>% 
+  ggplot(aes(x = weeks, y = level, group = weeks)) +
+  geom_boxplot() +
+  facet_grid(. ~ assignment) +
+  theme(legend.position = "none")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+## Appendix
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+```
