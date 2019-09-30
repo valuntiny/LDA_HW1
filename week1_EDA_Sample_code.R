@@ -181,7 +181,7 @@ scatter.smooth(res42,res41,pch=19,cex=0.2,col="lightgray",xlab="CESD Residuals",
 abline(h=0,lty=2)
 
 # Exploring correlation
-setwd("/HOMER/Teaching/P8157/Notes/WEEK1")
+# setwd("/HOMER/Teaching/P8157/Notes/WEEK1")
 pigs<-read.table("PIGS.txt",sep="\t",header=TRUE)
 colnames(pigs)<-1:9
 junk1<-medpolish(pigs)
