@@ -58,12 +58,11 @@ $$
 
 $$
 \begin{split}
-A &= I_{2} \\
-C &= \begin{pmatrix}
-  I_{5} \\
-  -1'_{5}
+A &= \begin{pmatrix}
+  1 & -1 \\
 \end{pmatrix} \\
-D &= \bf{0}_{2\times 5}
+C &= I_{6} \\
+D &= \bf{0}_{2\times 6}
 \end{split}
 $$
 
@@ -180,13 +179,53 @@ splom(TLC[2:6], xlab = NULL)
 
 ```
 
+\textbf{Figure6. correlation structure}
+
+```{r, dpi = 300}
+# correlation structure
+TLC3 = TLC %>% 
+  gather(week0:week6, key = "week", value = "level") %>% 
+  select(id, week, level) %>% 
+  mutate(week = as.factor(week)) %>% 
+  arrange(id)
+xyplot(level ~ week | id, data = TLC3[1:(4*12),], pch = 20, xlab = "Weeks", ylab = "Residuals")
+
+```
+
+\textbf{Figure7. Variogram for TLC data}
+
+```{r}
+# variogram
+library(nlme)
+weeknum = str_replace(TLC3$week, c("week0", "week1", "week4", "week6"), c("0", "1", "2", "3"))
+weeknum = as.integer(weeknum)
+u <- lapply(1:(nrow(TLC3) - 1), function(i){abs(weeknum[i] - weeknum[-c(1:i)])})
+gam1 <- Variogram(TLC3$level, unlist(u))
+gam2<-gam1$variog
+u2<-gam1$dist
+ylims=range(gam2)
+xlims<-range(u2)
+junk<-loess.smooth(u2,gam2,evaluation=length(u2),span=0.25)
+sid = TLC3$id
+sigma<-lapply(1:(length(TLC3) - 1), function(i){TLC3$level[i] - TLC3$level[sid != sid[i]]})
+sigma<-mean(((unlist(sigma))^2)/2)
+junk<-split(gam2,u2)
+gam2<-sapply(junk,median)
+par(mfcol=c(2,1))
+plot(0:3,gam2,pch=20,xlab="Distance",ylab="Variogram",type="b")
+abline(h=sigma,lty=2)
+rho2<-1-(gam2/sigma)
+plot(0:3,rho2,pch=20,xlab="Distance",ylab="Correlation",type="b")
+```
+
+
 ## 2. The data (dental.dat) are from a study of dental growth measurements of the distance (mm) from the center of the pituitary gland to the pteryomaxillary fissure were obtained on 11 girls and 16 boys at ages 8, 10, 12, and 14. The variables consist of ID, Gender, and responses at ages 8,10,12 and 14.
 
 From Fig.6 to Fig.8, we can hardly tell if the distance is increasing through time. But there exists difference between male and femal.
 
 From Fig.9 and Fig.10, we can see that there is strong correlation between weeks close in time, and distance increase as age effect increase.
 
-\textbf{Figure6. spaghetti plot for dental data}
+\textbf{Figure8. spaghetti plot for dental data}
 
 ```{r, fig.height = 3}
 # load dental data
@@ -202,7 +241,7 @@ theme(legend.position = "none")
 
 ```
 
-\textbf{Figure7. boxplot for dental data mean and s.d.}
+\textbf{Figure9. boxplot for dental data mean and s.d.}
 
 ```{r, dpi = 300, fig.height = 4}
 # boxplot about mean and sd
@@ -214,7 +253,7 @@ dent %>% gather(age8:age14, key = "age", value = "level") %>%
 
 ```
 
-\textbf{Figure8. spaghetti plot for standardized dental data}
+\textbf{Figure10. spaghetti plot for standardized dental data}
 
 ```{r, dpi = 300, fig.height = 3}
 # standardized time plot
@@ -230,7 +269,7 @@ dent2 %>% gather(age8:age14, key = "age", value = "level") %>%
 
 ```
 
-\textbf{Figure9. median polish and ACF for dental data}
+\textbf{Figure11. median polish and ACF for dental data}
 
 ```{r, dpi = 300, fig.height = 6}
 # median polish
@@ -246,7 +285,7 @@ acf(as.vector(t(res2)), xlab = "Lag", main = "(D) Correlation in dental Data")
 
 ```
 
-\textbf{Figure10. SPLOM for dental data}
+\textbf{Figure12. SPLOM for dental data}
 
 ```{r, dpi = 300, fig.height = 6}
 # SPLOM
@@ -273,7 +312,7 @@ plasma = read.table("ZERBE2.DAT", header = F) %>%
 
 ```
 
-\textbf{Figure11. boxplot for plasma data mean and s.d.}
+\textbf{Figure13. boxplot for plasma data mean and s.d.}
 
 ```{r, dpi = 300, fig.height = 4}
 # boxplot about mean and sd
@@ -285,7 +324,7 @@ plasma %>% gather(p0:p3, key = "hour", value = "level") %>%
 
 ```
 
-\textbf{Figure12. spaghetti plot for standardized plasma data}
+\textbf{Figure14. spaghetti plot for standardized plasma data}
 
 ```{r, dpi = 300, fig.height = 3}
 # standardized time plot
@@ -301,7 +340,7 @@ plasma2 %>% gather(p0:p3, key = "hour", value = "level") %>%
 
 ```
 
-\textbf{Figure13. median polish and ACF for plasma data}
+\textbf{Figure15. median polish and ACF for plasma data}
 
 ```{r, dpi = 300, fig.height = 6}
 # median polish
@@ -317,7 +356,7 @@ acf(as.vector(t(res3)), xlab = "Lag", main = "(D) Correlation in plasma Data")
 
 ```
 
-\textbf{Figure14. SPLOM for plasma data}
+\textbf{Figure16. SPLOM for plasma data}
 
 ```{r, dpi = 300, fig.height = 6}
 # SPLOM
@@ -333,8 +372,6 @@ Perfrom Hotelling's $T^2$ test, here we assume that:
 
 * $\Sigma_{1} = \Sigma_{2}$
 
-(a) we assume non parallelism, so we test two groups seperately by using one-sample Hotelling's $T^2$ test:
-
 ```{r}
 # Hotelling T test
 library(ICSNP)
@@ -347,19 +384,35 @@ x11 = plasma %>%
 x12 = plasma %>% 
   filter(group == 2) %>% 
   select(p0:p3)
-C1 = rbind(diag(5), rep(-1,5))
-H11 = HotellingsT2(as.matrix(x11) %*% C1)
+H11 = HotellingsT2(as.matrix(plasma[,3:8]) ~ plasma$group)
 
 ```
 
-* for control group, we calculate the pvalue = `r round(H11$p.value, 3)` < 0.05, so we reject the null hypothesis and conclude that there is not enough evidence to support that control group means are the same at all six measurement times
+(a) we assume non parallelism, so we test two groups seperately by using two-sample Hotelling's $T^2$ test, we calculate the pvalue = `r round(H11$p.value, 3)` < 0.05, so we reject the null hypothesis and conclude that there is not enough evidence to support that control group means are the same at all six measurement times
+
+also try to calculate manually by using covariance matrix S:
+
+$$
+\begin{split}
+S &= \frac{(n_{1} - 1)S_{1} + (n_{2} - 1)S_{2}}{n_{1} + n_{2} - 2} \\
+T_2 &= \frac{n_{1}n_{2}}{n_{1} + n_{2}}(\overline{y_{1}} - \overline{y_{2}})'S^{-1}(\overline{y_{1}} - \overline{y_{2}}) \sim T^2_{t, n_{1} + n_{2} - 2, \delta} \\
+F &= \frac{n_{1} + n_{2} - 2 - t - 1}{(n_{1} + n_{2} - 2)t}T^2 \sim F_{t, n_{1} + n_{2} -t - 1, \delta} \\
+where: \\
+t &= 6 \\
+n_{1} &= 13 \\
+n_{2} &= 20 \\
+\end{split}
+$$
 
 ```{r}
-H12 = HotellingsT2(as.matrix(x12) %*% C1)
-
+# mannualy calculation F statistics and p-value
+S = ((nrow(x11) - 1) * cov(x11) + (nrow(x12) - 1) * cov(x12)) / (nrow(x11) + nrow(x12) - 2)
+TSquare = nrow(x11) * nrow(x12) * t(apply(x11,2,mean) - apply(x12,2,mean)) %*% solve(S) %*% t(t(apply(x11,2,mean) - apply(x12,2,mean))) / (nrow(x11) + nrow(x12))
+Ftest = TSquare * (nrow(x11) + nrow(x12) - 2 - 6 + 1) / ((nrow(x11) + nrow(x12) - 2) * 6)
+pvalue = pf(Ftest, df1 = 6, df2 = nrow(x11) + nrow(x12) - 7, lower.tail = F)
 ```
 
-* for obese group, we calculate the pvalue = `r round(H11$p.value, 3)` < 0.05, so we reject the null hypothesis and conclude that there is not enough evidence to support that obese group means are the same at all six measurement times
+we got the same pvalue = `r round(pvalue, 3)`
 
 ```{r}
 # for (b)

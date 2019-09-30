@@ -224,7 +224,7 @@ par(mfcol=c(2,1))
 acf(b,main="All Subjects")
 pacf(b,main="All Subjects")
 
-#variogram
+# correlation structure
 id<-as.logical(rbinom(900,1,p=2/3))
 naid<-matrix(id,ncol=9,byrow=FALSE)
 b2<-a
@@ -237,6 +237,7 @@ zz[,3]<-as.factor(zz[,3])
 colnames(zz)<-c("times","b","id")
 xyplot(b~times|id,data=zz[1:(12*9),],pch=20,xlab="Time",ylab="Residuals")
 
+#variogram
 library(nlme)
 ind<-which(!is.na(b3))
 times<-times[ind]
