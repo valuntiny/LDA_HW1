@@ -27,8 +27,12 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = "")
-library(tidyverse)
 library(lattice) # for xyplot and SPLOM
+library(profileR) # for profile analysis
+library(nlme) # for variogram
+library(ICSNP) # for hotelling T2 test
+library(mvtnorm)
+library(tidyverse)
 options(knitr.table.format = "latex")
 theme_set(theme_bw())
 ```
@@ -194,9 +198,8 @@ xyplot(level ~ week | id, data = TLC3[1:(4*12),], pch = 20, xlab = "Weeks", ylab
 
 \textbf{Figure7. Variogram for TLC data}
 
-```{r}
+```{r, dpi = 300}
 # variogram
-library(nlme)
 weeknum = str_replace(TLC3$week, c("week0", "week1", "week4", "week6"), c("0", "1", "2", "3"))
 weeknum = as.integer(weeknum)
 u <- lapply(1:(nrow(TLC3) - 1), function(i){abs(weeknum[i] - weeknum[-c(1:i)])})
@@ -374,9 +377,6 @@ Perfrom Hotelling's $T^2$ test, here we assume that:
 
 ```{r}
 # Hotelling T test
-library(ICSNP)
-library(mvtnorm)
-
 # for (a)
 x11 = plasma %>% 
   filter(group == 1) %>% 
@@ -434,6 +434,15 @@ H2 = HotellingsT2(rbind(x21 %*% C2, x22 %*% C2) ~ plasma$group)
 ```
 
 (b) By using two-sample Hotelling's $T^2$ test, we calculate the pvalue = `r round(H2$p.value, 3)` < 0.05, so we reject the null hypothesis and conclude that there is not enough evidence to support that the profiles in the two groups are parallel
+
+\textbf{Figure17. profile analysis for plasma data}
+
+```{r, dpi = 300}
+# profile analysis
+profiling = pbg(plasma[,3:8], plasma$group, profile.plot = TRUE, original.names = TRUE)
+
+```
+
 
 ```{r}
 # for (c)
